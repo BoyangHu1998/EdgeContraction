@@ -52,8 +52,18 @@ void Vertex::compute_qem_coeff() {
 */
 
 // TODO: Iterate through all member vertices of the face
-std::vector<std::shared_ptr<Vertex>> Face::vertices() {
+std::vector<std::shared_ptr<Vertex>> Face::vertices() {  // w6 pg107
     std::vector<std::shared_ptr<Vertex>> member_vertices;
+
+    if (he == nullptr || !he->exists) {
+        return member_vertices;
+    }
+
+    auto he_iter = he;
+    do {
+        member_vertices.push_back(he_iter->vertex);
+        he_iter = he_iter->next;
+    } while (he != he_iter);
 
     return member_vertices;
 }
