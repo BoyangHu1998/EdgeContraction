@@ -17,8 +17,18 @@ std::vector<std::shared_ptr<Vertex>> Vertex::neighbor_vertices() {
 
 
 // TODO: Iterate through all half edges pointing away from the vertex
-std::vector<std::shared_ptr<HalfEdge>> Vertex::neighbor_half_edges() {
+std::vector<std::shared_ptr<HalfEdge>> Vertex::neighbor_half_edges() {  // w6 pg99
     std::vector<std::shared_ptr<HalfEdge>> neighborhood;
+
+    if (he == nullptr || !he->exists) {
+        return neighborhood;
+    }
+
+    auto he_iter = he;
+    do {
+        neighborhood.push_back(he_iter);
+        he_iter = he_iter->twin->next; 
+    } while (he != he_iter);
 
     return neighborhood;
 }
