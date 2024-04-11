@@ -65,6 +65,63 @@ void Mesh::convert_obj_format_to_mesh() {
         this->edges.clear();
     }
 
+    IdGenerator vertex_id_gen, face_id_gen, half_edge_id_gen, edge_id_gen;
+
+    // Create vertices
+    for (const auto& vertex3f : this->display_vertices) {
+        std::shared_ptr<Vertex> v = std::make_shared<Vertex>(vertex3f, vertex_id_gen.getID());
+        this->vertices.push_back(v);
+    }
+
+    // Create faces
+    for (const auto& face3i : this->display_faces) {
+        std::shared_ptr<Face> f = std::make_shared<Face>(face_id_gen.getID());
+        this->faces.push_back(f);
+    }
+    
+    // Create a map to store the half-edges of each vertex
+    std::map<std::pair<std::shared_ptr<Vertex>, std::shared_ptr<Vertex>>, std::shared_ptr<HalfEdge>> vertex_half_edges;
+
+    // Create half-edges
+    int face_id = 0;
+    for (const auto& face3i : this->display_faces) {
+        for (int i = 0; i < 3; i++) {
+            // 1. Create half-edge
+            std::shared_ptr<HalfEdge> he = std::make_shared<HalfEdge>(half_edge_id_gen.getID());
+            he->vertex = this->vertices[face3i[i]];
+            he->face = this->faces[face_id];  // this->faces[face3i[0]]; // CHECK: face id is the same for all half-edges of a face
+            this->half_edges.push_back(he);
+
+            auto pair = std::make_pair(this->vertices[face3i[i]], this->vertices[face3i[(i + 1) % 3]]);
+            auto twin_pair = std::make_pair(this->vertices[face3i[(i + 1) % 3]], this->vertices[face3i[i]]);
+
+
+            if (vertex_half_edges.find(twin_pair) == vertex_half_edges.end()) {  // twin half-edge not found
+                vertex_half_edges[pair] = he;
+
+                // 2. Create edge
+                std::shared_ptr<Edge> e = std::make_shared<Edge>(he, edge_id_gen.getID());
+                this->edges.push_back(e);
+            } else {
+
+                // 3. Set twin half-edges
+                he->twin = vertex_half_edges[twin_pair];
+                vertex_half_edges[twin_pair]->twin = he;
+            }
+        }
+        face_id++;
+    }
+
+    // Fill next for half-edges
+    for (int i = 0; i < this->half_edges.size(); i++) {
+        std::shared_ptr<HalfEdge> he = this->half_edges[i];
+        if (i % 3 <= 1) {
+            he->next = this->half_edges[i + 1];
+        } else { // i % 3 == 2
+            he->next = this->half_edges[i - 2];
+        }
+    }
+
     std::cout << "====== Mesh Information ======" << std::endl;
     this->print_mesh_info();
 

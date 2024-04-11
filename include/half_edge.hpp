@@ -10,6 +10,24 @@ class Vertex;
 class Face;
 class Edge;
 
+class IdGenerator {
+    private:
+        int id; 
+
+    public:
+        IdGenerator() {
+            id = 0; 
+        }
+
+        int getID() {
+            int ret = id++; // Increment the ID and store the next value
+            return ret;
+        }
+
+        void reset() {
+            id = 0;
+        }
+};
 
 class HalfEdge {
     public:
