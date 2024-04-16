@@ -73,6 +73,15 @@ std::vector<std::shared_ptr<Vertex>> Face::vertices() {  // w6 pg107
 float Face::get_area(){
     float area;
 
+    Eigen::Vector3f v1 = he->vertex->pos;
+    Eigen::Vector3f v2 = he->next->vertex->pos;
+    Eigen::Vector3f v3 = he->next->next->vertex->pos;
+
+    Eigen::Vector3f e1 = v2 - v1;
+    Eigen::Vector3f e2 = v3 - v1;
+
+    area = 0.5 * (e1.cross(e2)).norm();
+
     return area;
 }
 
@@ -80,6 +89,9 @@ float Face::get_area(){
 // reference: http://chenlab.ece.cornell.edu/Publication/Cha/icip01_Cha.pdf eq.(5)
 float Face::get_signed_volume(){
     float volume;
+
+    volume = 1.0/6.0 * (he->vertex->pos).dot((he->next->vertex->pos).cross(he->next->next->vertex->pos));
+    // CHECK: the order of the cross product
 
     return volume;
 }

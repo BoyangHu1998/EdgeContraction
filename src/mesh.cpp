@@ -131,7 +131,9 @@ void Mesh::convert_obj_format_to_mesh() {
 // TODO: Implement this function to compute the genus number 
 int Mesh::compute_genus() {
     int genus = 0;
-
+    // Euler's formula: V - E + F = 2 - 2g
+    // g = (2 - V + E - F) / 2
+    genus = (2 - this->vertices.size() + this->edges.size() - this->faces.size()) / 2;
     return genus;
 }
 
@@ -141,6 +143,10 @@ int Mesh::compute_genus() {
 float Mesh::compute_surface_area() {
     float total_surface_area = 0;
     
+    for (const auto& face : this->faces) {
+        total_surface_area += face->get_area();
+    }
+    
     return total_surface_area;
 }
 
@@ -149,7 +155,9 @@ float Mesh::compute_surface_area() {
 // HINT: You can first implement Face::get_signed_volume() to compute the volume associate with each face, and then sum them up 
 float Mesh::compute_volume() {
     float total_volume = 0;
-    
+    for (const auto& face : this->faces) {
+        total_volume += face->get_signed_volume();
+    }
     return total_volume;
 }
 
