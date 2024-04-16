@@ -68,14 +68,24 @@ void Mesh::convert_obj_format_to_mesh() {
     IdGenerator vertex_id_gen, face_id_gen, half_edge_id_gen, edge_id_gen;
 
     // Create vertices
+    /*
+        Eigen::Vector3f pos; filled
+        std::shared_ptr<HalfEdge> he; filled
+        Eigen::VectorXf qem_coff = Eigen::VectorXf(5); not filled
+    */
     for (const auto& vertex3f : this->display_vertices) {
         std::shared_ptr<Vertex> v = std::make_shared<Vertex>(vertex3f, vertex_id_gen.getID());
         this->vertices.push_back(v);
     }
 
     // Create faces
+    /*
+        std::shared_ptr<HalfEdge> he; filled
+        Eigen::Vector3f color;  not filled    
+    */
     for (const auto& face3i : this->display_faces) {
-        std::shared_ptr<Face> f = std::make_shared<Face>(face_id_gen.getID());
+        auto color = Vector3f(1.0f, 1.0f, 1.0f);  // white color
+        std::shared_ptr<Face> f = std::make_shared<Face>(color, face_id_gen.getID());
         this->faces.push_back(f);
     }
     
@@ -83,17 +93,32 @@ void Mesh::convert_obj_format_to_mesh() {
     std::map<std::pair<std::shared_ptr<Vertex>, std::shared_ptr<Vertex>>, std::shared_ptr<HalfEdge>> vertex_half_edges;
 
     // Create half-edges
+    /*
+        std::shared_ptr<HalfEdge> next; filled
+        std::shared_ptr<HalfEdge> twin; filled
+        std::shared_ptr<Face> face; filled
+        std::shared_ptr<Vertex> vertex; filled
+        std::shared_ptr<Edge> edge; filled 
+    */    
+    
     int face_id = 0;
     for (const auto& face3i : this->display_faces) {
         for (int i = 0; i < 3; i++) {
+            int v_ind = face3i[i];
+            auto v = this->vertices[v_ind];
+            auto v_next = this->vertices[face3i[(i + 1) % 3]];
+            auto f = this->faces[face_id];
+            
             // 1. Create half-edge
             std::shared_ptr<HalfEdge> he = std::make_shared<HalfEdge>(half_edge_id_gen.getID());
-            he->vertex = this->vertices[face3i[i]];
-            he->face = this->faces[face_id];  // this->faces[face3i[0]]; // CHECK: face id is the same for all half-edges of a face
+            v->he = he;  // update vertex's half-edge; one to one of the half-edges
+            he->vertex = v; // update half-edge's vertex
+            f->he = he;  // update face's half-edge; one to one of the half-edges
+            he->face = f;  // update half-edge's face
             this->half_edges.push_back(he);
 
-            auto pair = std::make_pair(this->vertices[face3i[i]], this->vertices[face3i[(i + 1) % 3]]);
-            auto twin_pair = std::make_pair(this->vertices[face3i[(i + 1) % 3]], this->vertices[face3i[i]]);
+            auto pair = std::make_pair(v, v_next);
+            auto twin_pair = std::make_pair(v_next, v);
 
 
             if (vertex_half_edges.find(twin_pair) == vertex_half_edges.end()) {  // twin half-edge not found
@@ -124,8 +149,9 @@ void Mesh::convert_obj_format_to_mesh() {
 
     std::cout << "====== Mesh Information ======" << std::endl;
     this->print_mesh_info();
-
 }
+
+
 
 
 // TODO: Implement this function to compute the genus number 
@@ -146,7 +172,7 @@ float Mesh::compute_surface_area() {
     for (const auto& face : this->faces) {
         total_surface_area += face->get_area();
     }
-    
+
     return total_surface_area;
 }
 
@@ -166,6 +192,20 @@ float Mesh::compute_volume() {
 // HINT: It requires traversing all neighbor vertices of a given vertex, which you can implement in Vertex::neighbor_vertices() first
 float Mesh::compute_average_degree() {
     float aver_deg = 0;
+    long total_deg = 0;
+
+    // Corner case
+    if (this->vertices.size() == 0) {
+        return aver_deg;
+    }
+
+    for (const auto& vertex : this->vertices) {
+        if (vertex && vertex->exists) {
+            total_deg += vertex->neighbor_vertices().size();
+        }
+    }
+
+    aver_deg = total_deg / (float) this->vertices.size();
 
     return aver_deg;
 }

@@ -12,6 +12,16 @@
 std::vector<std::shared_ptr<Vertex>> Vertex::neighbor_vertices() {
     std::vector<std::shared_ptr<Vertex>> neighborhood;
 
+    if (he == nullptr || !he->exists) {
+        return neighborhood;
+    }
+
+    auto he_iter = he;
+    do {
+        neighborhood.push_back(he_iter->twin->vertex);
+        he_iter = he_iter->twin->next;
+    } while (he != he_iter);
+
     return neighborhood; 
 }
 
@@ -90,8 +100,12 @@ float Face::get_area(){
 float Face::get_signed_volume(){
     float volume;
 
-    volume = 1.0/6.0 * (he->vertex->pos).dot((he->next->vertex->pos).cross(he->next->next->vertex->pos));
-    // CHECK: the order of the cross product
+    Eigen::Vector3f v1 = he->vertex->pos;
+    Eigen::Vector3f v2 = he->next->vertex->pos;
+    Eigen::Vector3f v3 = he->next->next->vertex->pos;
+
+    // CHECK: the paper
+    volume = (1.0/6.0) * (v1.dot(v2.cross(v3))); // 1/3 * Area * h // Area = 1/2 * |v1 x v2| // h = |v3 . (v1 x v2)| / |v1 x v2|
 
     return volume;
 }
