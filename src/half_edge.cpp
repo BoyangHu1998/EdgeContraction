@@ -12,7 +12,7 @@
 std::vector<std::shared_ptr<Vertex>> Vertex::neighbor_vertices() {
     std::vector<std::shared_ptr<Vertex>> neighborhood;
 
-    if (he == nullptr || !he->exists) {
+    if (he == nullptr || he->twin == nullptr) {
         return neighborhood;
     }
 
@@ -30,12 +30,13 @@ std::vector<std::shared_ptr<Vertex>> Vertex::neighbor_vertices() {
 std::vector<std::shared_ptr<HalfEdge>> Vertex::neighbor_half_edges() {  // w6 pg99
     std::vector<std::shared_ptr<HalfEdge>> neighborhood;
 
-    if (he == nullptr || !he->exists) {
+    if (he == nullptr || he->twin == nullptr) {
         return neighborhood;
     }
 
     auto he_iter = he;
     do {
+        assert(he_iter->twin != nullptr);
         neighborhood.push_back(he_iter);
         he_iter = he_iter->twin->next; 
     } while (he != he_iter);
@@ -52,6 +53,22 @@ std::vector<std::shared_ptr<HalfEdge>> Vertex::neighbor_half_edges() {  // w6 pg
 */
 void Vertex::compute_qem_coeff() {
     this->qem_coff = Eigen::VectorXf(5);
+
+    // q = [n; sum(vi); sum(vi.T * vi)]
+    auto neighbor_vertices = this->neighbor_vertices();
+    int n = neighbor_vertices.size();
+    Eigen::Vector3f sum_v(0, 0, 0);
+    float sum_vtv = 0;
+
+    for (auto v : neighbor_vertices) {
+        sum_v += v->pos;
+        sum_vtv += v->pos.dot(v->pos);
+    }
+
+    this->qem_coff(0) = n;
+    this->qem_coff.segment(1, 3) = sum_v;
+    this->qem_coff(4) = sum_vtv;
+    // debug:  (float[5])*((this->qem_coff).data())
 }
 
 
@@ -120,7 +137,7 @@ float Face::get_signed_volume(){
 /*
     TODO: 
         Compute the contraction information for the edge (v1, v2), which will be used later to perform edge collapse
-            (i) The optimal contraction target v*
+            (i) The optimal contraction target v* (How to compute? CHECK)
             (ii) The quadratic error metrics QEM, which will become the cost of contracting this edge
         The final results is stored in class variable "this->verts_contract_pos" and "this->qem"
     Please refer to homework description for more details
@@ -128,6 +145,35 @@ float Face::get_signed_volume(){
 void Edge::compute_contraction() {
     this->verts_contract_pos = Eigen::Vector3f(0, 0, 0);
     this->qem = 0;
+
+    Eigen::MatrixXf A = Eigen::MatrixXf::Zero(3, 3);
+    Eigen::VectorXf B = Eigen::VectorXf::Zero(3);
+
+    // v1, v2
+    std::shared_ptr<Vertex> v1 = this->he->vertex;
+    std::shared_ptr<Vertex> v2 = this->he->twin->vertex;
+
+    // v1, v2's coefficient with size 5
+    Eigen::VectorXf q1 = v1->qem_coff;
+    Eigen::VectorXf q2 = v2->qem_coff;
+
+    // q* = q1 + q2 //s refer: https://edstem.org/au/courses/15623/discussion/1868886
+    /*
+        Suppose we have vertices v1 and v2, each associated with quadratic coefficient q1 and q2, so that we can come up with E(v1)=q1v1 and E(v2)=q2v2, right?  Similarly, the combined quadratic error for the union of v1, v2 can be written as E(v*)=q*v*. In this case, we must derive a new matrix coefficient q* which approximates the error and we have chosen to use the simple additive rule q* = q1 + q2.
+        Be aware that the minimizer is the point where derivative is zero, therefore how you should compute the optimal contraction coordinate is to first compute q*, and then taking its derivative and set it to zero.
+        Haorui
+    */
+    Eigen::VectorXf q_star = q1 + q2;
+
+    // after derivation, we get the optimal contraction coordinate
+    this->verts_contract_pos = -q_star.segment(1, 3) / (2 * q_star(4));
+
+    // [v*Tv*; -2v*; 1]
+    Eigen::VectorXf v5f = Eigen::VectorXf(5);
+    v5f << this->verts_contract_pos.dot(this->verts_contract_pos), -2 * this->verts_contract_pos, 1;
+
+    // QEM = v*.T * Q * v*
+    this->qem = q_star.dot(v5f);
 }
 
 
@@ -143,5 +189,13 @@ void Edge::compute_contraction() {
     Please refer to homework description for more details
 */
 void Edge::edge_contraction() {
+    // v1, v2
+    std::shared_ptr<Vertex> v1 = this->he->vertex;
+    std::shared_ptr<Vertex> v2 = this->he->twin->vertex;
+
+    // (i) Moves the vertex v1 to the new position v*, remember to update all corresponding attributes,
     
+    // (ii) Connects all incident edges of v1 and v2 to v*, and remove the vertex v2,
+    
+    // (iii) All faces, half edges, and edges associated with this collapse edge will be removed.
 }

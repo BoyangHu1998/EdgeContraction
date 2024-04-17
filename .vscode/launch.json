@@ -56,6 +56,62 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+
+        {
+            "name": "(gdb) Launch task2 teeth.obj",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [
+                "../model/teeth.obj",
+                "0.1"
+            ],
+            "stopAtEntry": false,
+            "cwd": "/home/hb/Documents/CG/hw/HW3/HW3-CodeFramework/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        
+        {
+            "name": "(gdb) Launch task2 bigguy2",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [
+                "../model/bigguy2.obj",
+                "0.1"
+            ],
+            "stopAtEntry": false,
+            "cwd": "/home/hb/Documents/CG/hw/HW3/HW3-CodeFramework/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
 
 

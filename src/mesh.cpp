@@ -71,7 +71,7 @@ void Mesh::convert_obj_format_to_mesh() {
     /*
         Eigen::Vector3f pos; filled
         std::shared_ptr<HalfEdge> he; filled
-        Eigen::VectorXf qem_coff = Eigen::VectorXf(5); not filled
+        Eigen::VectorXf qem_coff = Eigen::VectorXf(5); not filled in task1
     */
     for (const auto& vertex3f : this->display_vertices) {
         std::shared_ptr<Vertex> v = std::make_shared<Vertex>(vertex3f, vertex_id_gen.getID());
@@ -120,19 +120,24 @@ void Mesh::convert_obj_format_to_mesh() {
             auto pair = std::make_pair(v, v_next);
             auto twin_pair = std::make_pair(v_next, v);
 
+            
+            std::shared_ptr<Edge> edge;
 
-            if (vertex_half_edges.find(twin_pair) == vertex_half_edges.end()) {  // twin half-edge not found
-                vertex_half_edges[pair] = he;
-
-                // 2. Create edge
-                std::shared_ptr<Edge> e = std::make_shared<Edge>(he, edge_id_gen.getID());
-                this->edges.push_back(e);
-            } else {
-
+            if (vertex_half_edges.find(twin_pair) != vertex_half_edges.end()) {  // twin half-edge found          
                 // 3. Set twin half-edges
                 he->twin = vertex_half_edges[twin_pair];
                 vertex_half_edges[twin_pair]->twin = he;
+
+                edge = he->twin->edge;
+            } else {
+                // 2. Create edge
+                edge = std::make_shared<Edge>(he, edge_id_gen.getID());
+                this->edges.push_back(edge);
             }
+
+            he->edge = edge;  // update half-edge's edge
+
+            vertex_half_edges[pair] = he;
         }
         face_id++;
     }
@@ -150,8 +155,6 @@ void Mesh::convert_obj_format_to_mesh() {
     std::cout << "====== Mesh Information ======" << std::endl;
     this->print_mesh_info();
 }
-
-
 
 
 // TODO: Implement this function to compute the genus number 
@@ -369,6 +372,8 @@ void Mesh::simplify(const float ratio) {
                     for (auto& adj_he : contract_edge_candid->he->vertex->neighbor_half_edges()) {
                         adj_he->edge->visited = true;
                     }
+
+                    // CHECK: Do we need to Mark edges that requires update for the other vertex?
 
                     cost_min_heap.pop();
                     delete_faces += 2;
