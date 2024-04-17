@@ -162,7 +162,29 @@ int Mesh::compute_genus() {
     int genus = 0;
     // Euler's formula: V - E + F = 2 - 2g
     // g = (2 - V + E - F) / 2
-    genus = (2 - this->vertices.size() + this->edges.size() - this->faces.size()) / 2;
+
+    long V = 0, E = 0, F = 0;
+    
+    for (const auto& vertex : this->vertices) {
+        if (vertex->exists) {
+            V++;
+        }
+    }
+
+    for (const auto& edge : this->edges) {
+        if (edge->exists) {
+            E++;
+        }
+    }
+
+    for (const auto& face : this->faces) {
+        if (face->exists) {
+            F++;
+        }
+    }
+
+    genus = (2 - V + E - F) / 2;
+
     return genus;
 }
 
@@ -173,7 +195,9 @@ float Mesh::compute_surface_area() {
     float total_surface_area = 0;
     
     for (const auto& face : this->faces) {
-        total_surface_area += face->get_area();
+        if (face->exists) {
+            total_surface_area += face->get_area();
+        }
     }
 
     return total_surface_area;
@@ -185,7 +209,9 @@ float Mesh::compute_surface_area() {
 float Mesh::compute_volume() {
     float total_volume = 0;
     for (const auto& face : this->faces) {
-        total_volume += face->get_signed_volume();
+        if (face->exists) {
+            total_volume += face->get_signed_volume();
+        }
     }
     return total_volume;
 }
@@ -196,6 +222,7 @@ float Mesh::compute_volume() {
 float Mesh::compute_average_degree() {
     float aver_deg = 0;
     long total_deg = 0;
+    int V = 0;
 
     // Corner case
     if (this->vertices.size() == 0) {
@@ -203,8 +230,9 @@ float Mesh::compute_average_degree() {
     }
 
     for (const auto& vertex : this->vertices) {
-        if (vertex && vertex->exists) {
+        if (vertex->exists) {
             total_deg += vertex->neighbor_vertices().size();
+            V++;
         }
     }
 

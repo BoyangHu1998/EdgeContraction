@@ -194,8 +194,51 @@ void Edge::edge_contraction() {
     std::shared_ptr<Vertex> v2 = this->he->twin->vertex;
 
     // (i) Moves the vertex v1 to the new position v*, remember to update all corresponding attributes,
+
+    // 1. update the position of v1
+    v1->pos = this->verts_contract_pos;
+    
+    // 2. v1->he need to be updated if the halfedge's edge is this edge
+    if (v1->he->edge.get() == this) {  // using .get() to get the raw pointer from shared_ptr
+        v1->he = v1->he->twin->next;
+    }
+
+    // 3. update the qem coefficient
+    v1->compute_qem_coeff(); 
+
+    // 4. exists and id doesn't need to be updated
+
     
     // (ii) Connects all incident edges of v1 and v2 to v*, and remove the vertex v2,
+
+    // 1. update the halfedge of v2: next, twin (unchange), face, vertex, edge (unchange), exists (after), id (unchange)
+    // 1.1. find the previous halfedge of v2
     
+    // 2. update the halfedge of v1
+    // 2.1. find the previous halfedge of v1s
+
+    // 3. update the vertex of the halfedge of v2
+
+
+    // update the next halfedge of the previous halfedge of v2
+
+    // update the next halfedge of the previous halfedge of v1
+
+
+    // 4. remove the vertex v2 by setting exists to false
+    v2->exists = false;
+
+
     // (iii) All faces, half edges, and edges associated with this collapse edge will be removed.
+
+    // 1. remove all (two) faces
+    this->he->face->exists = false;  
+    this->he->twin->face->exists = false;
+
+    // 2. remove all (two) half edges
+    this->he->exists = false; 
+    this->he->twin->exists = false;
+
+    // 3. remove the edge
+    this->exists = false;
 }
