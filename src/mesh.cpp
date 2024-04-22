@@ -373,6 +373,12 @@ void Mesh::simplify(const float ratio) {
         vertex->compute_qem_coeff();
     }
 
+    // // debug:
+    // for (const auto& vertex : this->vertices) {
+    //     auto neis =vertex->neighbor_vertices();
+    //     assert(neis.size() >= 3);
+    // }
+
     // Select all valid pairs.
     // In this homework, we use edge to act as vertex
 
@@ -401,7 +407,7 @@ void Mesh::simplify(const float ratio) {
                         adj_he->edge->visited = true;
                     }
 
-                    // CHECK: Do we need to Mark edges that requires update for the other vertex?
+                    // CHECK: Do we need to Mark edges that requires update for the other vertex? No, because the other vertex is not changed
 
                     cost_min_heap.pop();
                     delete_faces += 2;

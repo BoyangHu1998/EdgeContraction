@@ -1,0 +1,65 @@
+# type: ignore
+function convertOBJFormatToMesh():
+    # Clear existing mesh data if any
+    if vertices.size > 0:
+        clear(vertices, faces, half_edges, edges)
+
+    # Initialize ID generators for each component
+    vertexIDGenerator = new IDGenerator()
+    faceIDGenerator = new IDGenerator()
+    halfEdgeIDGenerator = new IDGenerator()
+    edgeIDGenerator = new IDGenerator()
+
+    # Create vertices
+    for each vertex in display_vertices:
+        position = new Vector3f(vertex)
+        vertexObj = new Vertex(position, vertexIDGenerator.getID())
+        vertices.push(vertexObj)
+
+    # Create faces and initialize face color
+    for each face in display_faces:
+        color = new Vector3f(1.0, 1.0, 1.0) # Default color
+        faceObj = new Face(color, faceIDGenerator.getID())
+        faces.push(faceObj)
+
+    # Map to track half-edges to efficiently find twins
+    halfEdgeMap = new Map()
+
+    # Create half-edges and edges
+    faceIndex = 0
+    for each face in display_faces:
+        for i from 0 to face.size - 1:
+            startVertex = vertices[face[i]]
+            endVertex = vertices[face[(i + 1) % face.size]]
+            faceObj = faces[faceIndex]
+            
+            # Create half-edge
+            halfEdge = new HalfEdge(halfEdgeIDGenerator.getID())
+            halfEdge.vertex = startVertex
+            halfEdge.face = faceObj
+            if faceObj.he is null:
+                faceObj.he = halfEdge
+            
+            startVertex.he = halfEdge # Assign half-edge to start vertex
+            
+            # Attempt to find and link twin half-edge
+            if halfEdgeMap.contains(endVertex, startVertex):
+                twinHalfEdge = halfEdgeMap.get(endVertex, startVertex)
+                halfEdge.twin = twinHalfEdge
+                twinHalfEdge.twin = halfEdge
+                halfEdge.edge = twinHalfEdge.edge
+            else:
+                # Create new edge if twin not found
+                edge = new Edge(halfEdge, edgeIDGenerator.getID())
+                halfEdge.edge = edge
+                edges.push(edge)
+            
+            halfEdgeMap.set(startVertex, endVertex, halfEdge)
+            
+            # Set 'next' pointer for half-edges in the same face
+            previousHalfEdge = halfEdge
+
+        # Link 'next' pointers cyclically for current face
+        for i from 0 to face.size - 1:
+            half_edges[faceIndex * face.size + i].next = half_edges[faceIndex * face.size + (i + 1) % face.size]
+        faceIndex += 1

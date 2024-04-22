@@ -65,7 +65,7 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "../model/teeth.obj",
-                "0.1"
+                "0.01"
             ],
             "stopAtEntry": false,
             "cwd": "/home/hb/Documents/CG/hw/HW3/HW3-CodeFramework/build",
